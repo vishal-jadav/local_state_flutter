@@ -11,7 +11,7 @@ large state management framework.
 
 - `ChangeVar<T>` for one reactive value.
 - `ChangeObject` for grouped object-wise state.
-- `LocalState` for auto-disposed state inside `StatefulWidget` classes.
+- `LocalObject` for auto-disposed state without writing a `StatefulWidget`.
 - `StateBuilder<T>` to rebuild only the widget attached to a changed value.
 - `StateSelector<T, S>` to rebuild only when a selected part changes.
 - `watch`, `watchAll`, and `select` helpers for concise widget code.
@@ -34,36 +34,28 @@ import 'package:state_manage_package/state_manage_package.dart';
 
 ## Basic Usage
 
-Extend `LocalState` and create local values with `state`.
+Extend `LocalObject` and create local values inside `build`. You do not need
+to write a constructor, a `StatefulWidget`, a separate `State` class, or a
+manual `dispose` method.
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:state_manage_package/state_manage_package.dart';
 
-class CounterPage extends StatefulWidget {
-  const CounterPage({super.key});
-
+class CounterPage extends LocalObject {
   @override
-  State<CounterPage> createState() => _CounterPageState();
-}
+  Widget build(BuildContext context, LocalObjectState local) {
+    final count = local.state(0);
 
-class _CounterPageState extends LocalState<CounterPage> {
-  late final count = state(0);
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('ChangeVar Example')),
       body: Center(
-        child: StateBuilder<int>(
-          state: count,
-          builder: (context, value, child) {
-            return Text(
-              'Count: $value',
-              style: const TextStyle(fontSize: 32),
-            );
-          },
-        ),
+        child: count.watch((context, value, child) {
+          return Text(
+            'Count: $value',
+            style: const TextStyle(fontSize: 32),
+          );
+        }),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -76,26 +68,48 @@ class _CounterPageState extends LocalState<CounterPage> {
 }
 ```
 
-When `count.value++` runs, only the `StateBuilder<int>` subtree rebuilds. The
-parent page does not need `setState`, and `count` is disposed automatically
+When `count.value++` runs, only the `count.watch` subtree rebuilds. The parent
+page does not need `setState`, and `count` is disposed automatically
 when the widget is removed.
 
-## Short Watch Syntax
+## Multiple Local Values
 
-Every `ChangeVar<T>` also has a `watch` helper:
+Create as many values as you need with `local.state`.
 
 ```dart
-final title = ChangeVar<String>('Dashboard');
+class DashboardPage extends LocalObject {
+  @override
+  Widget build(BuildContext context, LocalObjectState local) {
+    final title = local.state('Dashboard');
+    final isLoading = local.state(false);
 
-title.watch(
-  (context, value, child) => Text(value),
-);
+    return Column(
+      children: [
+        title.watch((context, value, child) => Text(value)),
+        isLoading.watch((context, value, child) {
+          return Switch(
+            value: value,
+            onChanged: (nextValue) {
+              isLoading.value = nextValue;
+            },
+          );
+        }),
+        ElevatedButton(
+          onPressed: () {
+            title.value = 'Reports';
+          },
+          child: const Text('Change title'),
+        ),
+      ],
+    );
+  }
+}
 ```
 
-Update the value directly:
+For conditional state or state created inside loops, pass a stable `key`:
 
 ```dart
-title.value = 'Reports';
+final filter = local.state('all', key: 'filter');
 ```
 
 ## Object-wise State
@@ -103,22 +117,15 @@ title.value = 'Reports';
 Use `ChangeObject` when a screen has multiple related state properties.
 
 ```dart
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
-
+class ProfilePage extends LocalObject {
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
-}
+  Widget build(BuildContext context, LocalObjectState local) {
+    final profile = local.objectState({
+      'name': 'Vishal',
+      'age': 28,
+      'isSaving': false,
+    });
 
-class _ProfilePageState extends LocalState<ProfilePage> {
-  late final profile = objectState({
-    'name': 'Vishal',
-    'age': 28,
-    'isSaving': false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     return Column(
       children: [
         profile.watch<String>(
@@ -231,8 +238,11 @@ profile.age.value++;
   and `refresh`.
 - `ChangeObject`: a group of named reactive properties.
 - `ChangeProperty<T>`: a typed handle to one `ChangeObject` property.
+- `LocalObject`: a widget base class that creates and auto-disposes local state
+  without a separate `StatefulWidget` class.
+- `LocalObjectState`: the local state handle passed into `LocalObject.build`.
 - `LocalState`: a `State` base class that creates and auto-disposes local
-  state with `state` and `objectState`.
+  state with `state` and `objectState` when you already need a `State` class.
 - `LocalStateMixin`: the same lifecycle helpers as a mixin for existing
   `State` classes.
 - `StateBuilder<T>`: rebuilds when a `ValueListenable<T>` changes.

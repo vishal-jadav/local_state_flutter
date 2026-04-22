@@ -260,6 +260,108 @@ class ChangeObject extends ChangeNotifier
   }
 }
 
+/// A widget with built-in, auto-disposed local state.
+///
+/// Extend this when you want local state without writing a separate
+/// [StatefulWidget] and [State] class:
+///
+/// ```dart
+/// class CounterPage extends LocalObject {
+///   @override
+///   Widget build(BuildContext context, LocalObjectState local) {
+///     final count = local.state(0);
+///     return count.watch((context, value, child) => Text('$value'));
+///   }
+/// }
+/// ```
+abstract class LocalObject extends StatefulWidget {
+  /// Creates a local object widget.
+  const LocalObject({super.key});
+
+  @override
+  LocalObjectState createState() => LocalObjectState();
+
+  /// Builds this widget with access to auto-disposed local state.
+  Widget build(BuildContext context, LocalObjectState local);
+}
+
+/// Stores local state for a [LocalObject].
+class LocalObjectState extends State<LocalObject> {
+  final _managedStates = <Object, ChangeNotifier>{};
+  var _buildIndex = 0;
+
+  /// Creates or returns a [ChangeVar] for this build position.
+  ///
+  /// Use [key] when the state is created conditionally or inside loops.
+  ChangeVar<T> state<T>(T initialValue, {Object? key}) {
+    return manage<ChangeVar<T>>(
+      _stateKey(key),
+      () => ChangeVar<T>(initialValue),
+    );
+  }
+
+  /// Creates or returns a [ChangeObject] for this build position.
+  ///
+  /// Use [key] when the state is created conditionally or inside loops.
+  ChangeObject objectState(Map<String, Object?> initialValues, {Object? key}) {
+    return manage<ChangeObject>(
+      _stateKey(key),
+      () => ChangeObject(initialValues),
+    );
+  }
+
+  /// Creates or returns a managed [ChangeNotifier] for [key].
+  T manage<T extends ChangeNotifier>(Object key, T Function() create) {
+    final notifier = _managedStates[key];
+    if (notifier == null) {
+      final createdNotifier = create();
+      _managedStates[key] = createdNotifier;
+      return createdNotifier;
+    }
+
+    if (notifier is T) {
+      return notifier;
+    }
+
+    throw StateError(
+      'LocalObject state "$key" contains ${notifier.runtimeType}, not $T.',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _buildIndex = 0;
+    return widget.build(context, this);
+  }
+
+  @override
+  void dispose() {
+    for (final notifier in _managedStates.values.toList().reversed) {
+      notifier.dispose();
+    }
+    _managedStates.clear();
+    super.dispose();
+  }
+
+  Object _stateKey(Object? key) {
+    return key ?? _LocalObjectSlot(_buildIndex++);
+  }
+}
+
+class _LocalObjectSlot {
+  const _LocalObjectSlot(this.index);
+
+  final int index;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _LocalObjectSlot && other.index == index;
+  }
+
+  @override
+  int get hashCode => Object.hash(_LocalObjectSlot, index);
+}
+
 /// Adds auto-disposed local state helpers to a [StatefulWidget] [State].
 ///
 /// Use this mixin when your state class already needs to extend [State]:

@@ -182,6 +182,36 @@ void main() {
     expect(tracker.isDisposed, isTrue);
   });
 
+  testWidgets('LocalObject creates state without StatefulWidget boilerplate', (
+    tester,
+  ) async {
+    final tracker = _TrackingNotifier();
+    ChangeVar<int>? count;
+
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: _LocalObjectCounter(
+          tracker: tracker,
+          onStateReady: (value) {
+            count = value;
+          },
+        ),
+      ),
+    );
+
+    expect(find.text('Count: 0'), findsOneWidget);
+
+    count!.value++;
+    await tester.pump();
+
+    expect(find.text('Count: 1'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+
+    expect(tracker.isDisposed, isTrue);
+  });
+
   testWidgets('StateSelector ignores updates outside the selected value', (
     tester,
   ) async {
@@ -360,5 +390,26 @@ class _LocalStateCounterState extends LocalState<_LocalStateCounter> {
         return Text('Count: $value');
       }),
     );
+  }
+}
+
+class _LocalObjectCounter extends LocalObject {
+  const _LocalObjectCounter({
+    required this.tracker,
+    required this.onStateReady,
+  });
+
+  final _TrackingNotifier tracker;
+  final ValueChanged<ChangeVar<int>> onStateReady;
+
+  @override
+  Widget build(BuildContext context, LocalObjectState local) {
+    final count = local.state(0);
+    local.manage('tracker', () => tracker);
+    onStateReady(count);
+
+    return count.watch((context, value, child) {
+      return Text('Count: $value');
+    });
   }
 }
