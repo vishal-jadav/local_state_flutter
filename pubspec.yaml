@@ -1,6 +1,6 @@
 name: state_manage_package
 description: A lightweight Flutter state management package that rebuilds only the widgets watching changed values.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/vishal-jadav/local_state_flutter
 repository: https://github.com/vishal-jadav/local_state_flutter
 issue_tracker: https://github.com/vishal-jadav/local_state_flutter/issues
