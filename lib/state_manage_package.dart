@@ -1,3 +1,8 @@
+/// Lightweight local state helpers for Flutter widgets.
+///
+/// Use [LocalVar] for a single reactive value, [ChangeObject] for grouped
+/// values, and [LocalObject] when you want Flutter to keep and dispose local
+/// state automatically.
 library;
 
 import 'package:flutter/foundation.dart';

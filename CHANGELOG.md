@@ -7,6 +7,7 @@
   `StatefulWidget` state.
 * Expanded README examples for `LocalVar`, `LocalObject`, `StatelessWidget`,
   and `StatefulWidget` usage.
+* Added a runnable example and library-level documentation for pub.dev scoring.
 
 ## 0.0.1
 
