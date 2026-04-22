@@ -35,7 +35,10 @@ import 'package:state_manage_package/state_manage_package.dart';
 
 ## LocalVar
 
-Use `LocalVar<T>` when you need one reactive value.
+Use `LocalVar<T>` when you need one reactive value. `LocalObject` is optional:
+it only helps Flutter keep and dispose local values automatically.
+
+### Direct LocalVar
 
 ```dart
 final count = LocalVar<int>(0);
@@ -47,7 +50,86 @@ count.watch((context, value, child) {
 count.value++;
 ```
 
-You can also create a `LocalVar<T>` inside a `LocalObject` with `local.state`.
+When you create a `LocalVar<T>` directly, you own it and should dispose it when
+it is no longer needed.
+
+### StatelessWidget
+
+Use a `StatelessWidget` when the `LocalVar<T>` is owned somewhere else and
+passed in.
+
+```dart
+class CounterView extends StatelessWidget {
+  const CounterView({
+    required this.count,
+    super.key,
+  });
+
+  final LocalVar<int> count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        count.watch((context, value, child) {
+          return Text('Count: $value');
+        }),
+        ElevatedButton(
+          onPressed: () {
+            count.value++;
+          },
+          child: const Text('Increment'),
+        ),
+      ],
+    );
+  }
+}
+```
+
+### StatefulWidget
+
+Use a `StatefulWidget` when the widget owns the `LocalVar<T>` manually.
+
+```dart
+class CounterPage extends StatefulWidget {
+  const CounterPage({super.key});
+
+  @override
+  State<CounterPage> createState() => _CounterPageState();
+}
+
+class _CounterPageState extends State<CounterPage> {
+  final count = LocalVar<int>(0);
+
+  @override
+  void dispose() {
+    count.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        count.watch((context, value, child) {
+          return Text('Count: $value');
+        }),
+        ElevatedButton(
+          onPressed: () {
+            count.value++;
+          },
+          child: const Text('Increment'),
+        ),
+      ],
+    );
+  }
+}
+```
+
+### LocalObject
+
+Use `LocalObject` when you want the package to keep and dispose the
+`LocalVar<T>` automatically.
 
 ```dart
 class SearchPage extends LocalObject {
@@ -71,6 +153,9 @@ class SearchPage extends LocalObject {
 
 `LocalVar<T>` has `value`, `set`, `update`, `mutate`, and `refresh`. Update it
 directly with `count.value++`, `count.value = 10`, or `count.set(10)`.
+
+Do not create `LocalVar<T>` directly inside `StatelessWidget.build`, because it
+will be recreated on rebuild.
 
 ## LocalObject
 
