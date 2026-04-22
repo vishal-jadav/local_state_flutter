@@ -49,6 +49,21 @@ void main() {
     expect(notifications, 1);
   });
 
+  test('LocalVar behaves like ChangeVar', () {
+    final count = LocalVar<int>(0);
+    var notifications = 0;
+
+    count.addListener(() {
+      notifications++;
+    });
+
+    count.value++;
+
+    expect(count, isA<ChangeVar<int>>());
+    expect(count.value, 1);
+    expect(notifications, 1);
+  });
+
   test('ChangeObject manages named state properties', () {
     final profile = ChangeObject({'name': 'Asha', 'age': 30});
     var objectNotifications = 0;
@@ -156,7 +171,7 @@ void main() {
     tester,
   ) async {
     final tracker = _TrackingNotifier();
-    ChangeVar<int>? count;
+    LocalVar<int>? count;
 
     await tester.pumpWidget(
       Directionality(
@@ -186,7 +201,7 @@ void main() {
     tester,
   ) async {
     final tracker = _TrackingNotifier();
-    ChangeVar<int>? count;
+    LocalVar<int>? count;
 
     await tester.pumpWidget(
       Directionality(
@@ -370,7 +385,7 @@ class _LocalStateCounter extends StatefulWidget {
   const _LocalStateCounter({required this.tracker, required this.onStateReady});
 
   final _TrackingNotifier tracker;
-  final ValueChanged<ChangeVar<int>> onStateReady;
+  final ValueChanged<LocalVar<int>> onStateReady;
 
   @override
   State<_LocalStateCounter> createState() => _LocalStateCounterState();
@@ -400,7 +415,7 @@ class _LocalObjectCounter extends LocalObject {
   });
 
   final _TrackingNotifier tracker;
-  final ValueChanged<ChangeVar<int>> onStateReady;
+  final ValueChanged<LocalVar<int>> onStateReady;
 
   @override
   Widget build(BuildContext context, LocalObjectState local) {

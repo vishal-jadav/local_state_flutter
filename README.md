@@ -10,6 +10,7 @@ large state management framework.
 ## Features
 
 - `ChangeVar<T>` for one reactive value.
+- `LocalVar<T>` for auto-disposed local values created by `LocalObject`.
 - `ChangeObject` for grouped object-wise state.
 - `LocalObject` for auto-disposed state without writing a `StatefulWidget`.
 - `StateBuilder<T>` to rebuild only the widget attached to a changed value.
@@ -68,9 +69,42 @@ class CounterPage extends LocalObject {
 }
 ```
 
+`local.state(0)` returns a `LocalVar<int>`. Update it directly with
+`count.value++`, `count.value = 10`, or `count.set(10)`.
+
 When `count.value++` runs, only the `count.watch` subtree rebuilds. The parent
 page does not need `setState`, and `count` is disposed automatically
 when the widget is removed.
+
+## LocalVar
+
+Use `LocalVar<T>` when you need one local value.
+
+```dart
+class SearchPage extends LocalObject {
+  @override
+  Widget build(BuildContext context, LocalObjectState local) {
+    final query = local.state('');
+
+    return Column(
+      children: [
+        query.watch((context, value, child) => Text('Search: $value')),
+        TextField(
+          onChanged: (value) {
+            query.value = value;
+          },
+        ),
+      ],
+    );
+  }
+}
+```
+
+You can also create one directly when you want to manage disposal yourself:
+
+```dart
+final count = LocalVar<int>(0);
+```
 
 ## Multiple Local Values
 
@@ -236,6 +270,8 @@ profile.age.value++;
 
 - `ChangeVar<T>`: a listenable value with `value`, `set`, `update`, `mutate`,
   and `refresh`.
+- `LocalVar<T>`: the local-state name for a single reactive value. It behaves
+  like `ChangeVar<T>` and is returned by `local.state`.
 - `ChangeObject`: a group of named reactive properties.
 - `ChangeProperty<T>`: a typed handle to one `ChangeObject` property.
 - `LocalObject`: a widget base class that creates and auto-disposes local state

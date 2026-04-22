@@ -73,6 +73,15 @@ class ChangeVar<T> extends ChangeNotifier implements ValueListenable<T> {
   }
 }
 
+/// A locally owned reactive value.
+///
+/// [LocalVar] has the same behavior as [ChangeVar], but the name is intended
+/// for values created inside [LocalObject] and [LocalState].
+class LocalVar<T> extends ChangeVar<T> {
+  /// Creates a local state value with [initialValue].
+  LocalVar(super.initialValue);
+}
+
 /// A typed handle to one named property inside a [ChangeObject].
 ///
 /// This can be used anywhere a [ValueListenable] is accepted, including
@@ -290,14 +299,11 @@ class LocalObjectState extends State<LocalObject> {
   final _managedStates = <Object, ChangeNotifier>{};
   var _buildIndex = 0;
 
-  /// Creates or returns a [ChangeVar] for this build position.
+  /// Creates or returns a [LocalVar] for this build position.
   ///
   /// Use [key] when the state is created conditionally or inside loops.
-  ChangeVar<T> state<T>(T initialValue, {Object? key}) {
-    return manage<ChangeVar<T>>(
-      _stateKey(key),
-      () => ChangeVar<T>(initialValue),
-    );
+  LocalVar<T> state<T>(T initialValue, {Object? key}) {
+    return manage<LocalVar<T>>(_stateKey(key), () => LocalVar<T>(initialValue));
   }
 
   /// Creates or returns a [ChangeObject] for this build position.
@@ -375,9 +381,9 @@ class _LocalObjectSlot {
 mixin LocalStateMixin<W extends StatefulWidget> on State<W> {
   final _managedStates = <ChangeNotifier>{};
 
-  /// Creates a [ChangeVar] that is disposed automatically with this widget.
-  ChangeVar<T> state<T>(T initialValue) {
-    return manage(ChangeVar<T>(initialValue));
+  /// Creates a [LocalVar] that is disposed automatically with this widget.
+  LocalVar<T> state<T>(T initialValue) {
+    return manage(LocalVar<T>(initialValue));
   }
 
   /// Creates a [ChangeObject] that is disposed automatically with this widget.
