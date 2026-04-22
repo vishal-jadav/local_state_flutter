@@ -33,11 +33,50 @@ Then import it:
 import 'package:state_manage_package/state_manage_package.dart';
 ```
 
-## Basic Usage
+## LocalVar
 
-Extend `LocalObject` and create local values inside `build`. You do not need
-to write a constructor, a `StatefulWidget`, a separate `State` class, or a
-manual `dispose` method.
+Use `LocalVar<T>` when you need one reactive value.
+
+```dart
+final count = LocalVar<int>(0);
+
+count.watch((context, value, child) {
+  return Text('Count: $value');
+});
+
+count.value++;
+```
+
+You can also create a `LocalVar<T>` inside a `LocalObject` with `local.state`.
+
+```dart
+class SearchPage extends LocalObject {
+  @override
+  Widget build(BuildContext context, LocalObjectState local) {
+    final query = local.state('');
+
+    return Column(
+      children: [
+        query.watch((context, value, child) => Text('Search: $value')),
+        TextField(
+          onChanged: (value) {
+            query.value = value;
+          },
+        ),
+      ],
+    );
+  }
+}
+```
+
+`LocalVar<T>` has `value`, `set`, `update`, `mutate`, and `refresh`. Update it
+directly with `count.value++`, `count.value = 10`, or `count.set(10)`.
+
+## LocalObject
+
+Extend `LocalObject` when you want Flutter to automatically keep and dispose
+your local values. You do not need to write a constructor, a `StatefulWidget`,
+a separate `State` class, or a manual `dispose` method.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -69,42 +108,9 @@ class CounterPage extends LocalObject {
 }
 ```
 
-`local.state(0)` returns a `LocalVar<int>`. Update it directly with
-`count.value++`, `count.value = 10`, or `count.set(10)`.
-
 When `count.value++` runs, only the `count.watch` subtree rebuilds. The parent
 page does not need `setState`, and `count` is disposed automatically
 when the widget is removed.
-
-## LocalVar
-
-Use `LocalVar<T>` when you need one local value.
-
-```dart
-class SearchPage extends LocalObject {
-  @override
-  Widget build(BuildContext context, LocalObjectState local) {
-    final query = local.state('');
-
-    return Column(
-      children: [
-        query.watch((context, value, child) => Text('Search: $value')),
-        TextField(
-          onChanged: (value) {
-            query.value = value;
-          },
-        ),
-      ],
-    );
-  }
-}
-```
-
-You can also create one directly when you want to manage disposal yourself:
-
-```dart
-final count = LocalVar<int>(0);
-```
 
 ## Multiple Local Values
 
