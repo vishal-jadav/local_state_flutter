@@ -250,6 +250,15 @@ profile.age.value++;
 
 Created and maintained by Vishal Jadav.
 
+## Contributing
+
+Contributions are welcome. If you want to contribute, fork the repository,
+create a branch for your changes, and raise a pull request targeting the
+`main` branch on GitHub.
+
+Please keep changes focused and include tests or documentation updates when
+they are relevant.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).
