@@ -152,6 +152,36 @@ void main() {
     expect(find.text('Title: Changed'), findsOneWidget);
   });
 
+  testWidgets('LocalState creates and disposes widget-owned state', (
+    tester,
+  ) async {
+    final tracker = _TrackingNotifier();
+    ChangeVar<int>? count;
+
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: _LocalStateCounter(
+          tracker: tracker,
+          onStateReady: (value) {
+            count = value;
+          },
+        ),
+      ),
+    );
+
+    expect(find.text('Count: 0'), findsOneWidget);
+
+    count!.value++;
+    await tester.pump();
+
+    expect(find.text('Count: 1'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+
+    expect(tracker.isDisposed, isTrue);
+  });
+
   testWidgets('StateSelector ignores updates outside the selected value', (
     tester,
   ) async {
@@ -294,4 +324,41 @@ void main() {
 
     profile.dispose();
   });
+}
+
+class _TrackingNotifier extends ChangeNotifier {
+  bool isDisposed = false;
+
+  @override
+  void dispose() {
+    isDisposed = true;
+    super.dispose();
+  }
+}
+
+class _LocalStateCounter extends StatefulWidget {
+  const _LocalStateCounter({required this.tracker, required this.onStateReady});
+
+  final _TrackingNotifier tracker;
+  final ValueChanged<ChangeVar<int>> onStateReady;
+
+  @override
+  State<_LocalStateCounter> createState() => _LocalStateCounterState();
+}
+
+class _LocalStateCounterState extends LocalState<_LocalStateCounter> {
+  late final count = state(0);
+  late final tracker = manage(widget.tracker);
+
+  @override
+  Widget build(BuildContext context) {
+    widget.onStateReady(count);
+
+    return KeyedSubtree(
+      key: ValueKey(tracker.isDisposed),
+      child: count.watch((context, value, child) {
+        return Text('Count: $value');
+      }),
+    );
+  }
 }

@@ -260,6 +260,61 @@ class ChangeObject extends ChangeNotifier
   }
 }
 
+/// Adds auto-disposed local state helpers to a [StatefulWidget] [State].
+///
+/// Use this mixin when your state class already needs to extend [State]:
+///
+/// ```dart
+/// class _CounterPageState extends State<CounterPage>
+///     with LocalStateMixin<CounterPage> {
+///   late final count = state(0);
+/// }
+/// ```
+mixin LocalStateMixin<W extends StatefulWidget> on State<W> {
+  final _managedStates = <ChangeNotifier>{};
+
+  /// Creates a [ChangeVar] that is disposed automatically with this widget.
+  ChangeVar<T> state<T>(T initialValue) {
+    return manage(ChangeVar<T>(initialValue));
+  }
+
+  /// Creates a [ChangeObject] that is disposed automatically with this widget.
+  ChangeObject objectState(Map<String, Object?> initialValues) {
+    return manage(ChangeObject(initialValues));
+  }
+
+  /// Registers a [ChangeNotifier] to be disposed automatically.
+  ///
+  /// This is useful when you create your own [ChangeNotifier] subclass and want
+  /// it to share the same lifecycle as state created with [state].
+  T manage<T extends ChangeNotifier>(T notifier) {
+    _managedStates.add(notifier);
+    return notifier;
+  }
+
+  @override
+  void dispose() {
+    for (final notifier in _managedStates.toList().reversed) {
+      notifier.dispose();
+    }
+    _managedStates.clear();
+    super.dispose();
+  }
+}
+
+/// A simpler [State] base class with auto-disposed local state helpers.
+///
+/// Extend this instead of [State] when you want to create local state without
+/// writing your own `dispose` method:
+///
+/// ```dart
+/// class _CounterPageState extends LocalState<CounterPage> {
+///   late final count = state(0);
+/// }
+/// ```
+abstract class LocalState<W extends StatefulWidget> extends State<W>
+    with LocalStateMixin<W> {}
+
 /// Rebuilds only this widget subtree when [state] changes.
 class StateBuilder<T> extends StatelessWidget {
   /// Creates a widget that listens to [state].

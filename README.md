@@ -11,6 +11,7 @@ large state management framework.
 
 - `ChangeVar<T>` for one reactive value.
 - `ChangeObject` for grouped object-wise state.
+- `LocalState` for auto-disposed state inside `StatefulWidget` classes.
 - `StateBuilder<T>` to rebuild only the widget attached to a changed value.
 - `StateSelector<T, S>` to rebuild only when a selected part changes.
 - `watch`, `watchAll`, and `select` helpers for concise widget code.
@@ -33,7 +34,7 @@ import 'package:state_manage_package/state_manage_package.dart';
 
 ## Basic Usage
 
-Create a `ChangeVar<T>` and watch it with `StateBuilder<T>`.
+Extend `LocalState` and create local values with `state`.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -46,14 +47,8 @@ class CounterPage extends StatefulWidget {
   State<CounterPage> createState() => _CounterPageState();
 }
 
-class _CounterPageState extends State<CounterPage> {
-  final count = ChangeVar<int>(0);
-
-  @override
-  void dispose() {
-    count.dispose();
-    super.dispose();
-  }
+class _CounterPageState extends LocalState<CounterPage> {
+  late final count = state(0);
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +77,8 @@ class _CounterPageState extends State<CounterPage> {
 ```
 
 When `count.value++` runs, only the `StateBuilder<int>` subtree rebuilds. The
-parent page does not need `setState`.
+parent page does not need `setState`, and `count` is disposed automatically
+when the widget is removed.
 
 ## Short Watch Syntax
 
@@ -114,18 +110,12 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
-  final profile = ChangeObject({
+class _ProfilePageState extends LocalState<ProfilePage> {
+  late final profile = objectState({
     'name': 'Vishal',
     'age': 28,
     'isSaving': false,
   });
-
-  @override
-  void dispose() {
-    profile.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -241,6 +231,10 @@ profile.age.value++;
   and `refresh`.
 - `ChangeObject`: a group of named reactive properties.
 - `ChangeProperty<T>`: a typed handle to one `ChangeObject` property.
+- `LocalState`: a `State` base class that creates and auto-disposes local
+  state with `state` and `objectState`.
+- `LocalStateMixin`: the same lifecycle helpers as a mixin for existing
+  `State` classes.
 - `StateBuilder<T>`: rebuilds when a `ValueListenable<T>` changes.
 - `ChangeObjectBuilder`: rebuilds when any property in a `ChangeObject`
   changes.
