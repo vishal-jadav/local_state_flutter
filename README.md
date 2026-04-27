@@ -1,6 +1,8 @@
-# state_manage_package
+# state_manage_package 0.0.2
 
 A lightweight Flutter state management package by Vishal Jadav.
+
+Latest version: `0.0.2`.
 
 `state_manage_package` gives you small reactive values that rebuild only the
 widgets that are watching them. It is useful for local screen state, form state,
@@ -24,7 +26,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  state_manage_package: ^0.0.1
+  state_manage_package: ^0.0.2
 ```
 
 Then import it:
