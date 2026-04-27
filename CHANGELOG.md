@@ -1,3 +1,7 @@
+## 0.0.3
+
+* Updated README version information and installation instructions.
+
 ## 0.0.2
 
 * Added `LocalVar` as the local-state name for a single reactive value.
